@@ -6,6 +6,65 @@
 # https://github.com/stronny/nails
 
 # ----------------------------------------------------------------------------
+# Internal functions
+#
+bh.usage() {
+	cat <<-END
+		Usage: bash-hammer filename [arguments]
+		       This program is not intended to be run directly.
+		       Please look inside to find out more.
+	END
+}
+
+bh.version() {
+	echo "bash-hammer version ${__NAILS_VERSION}"
+}
+
+bh.err() {
+	echo "$1" >&2;
+}
+
+bh.normalize_args() {
+	local keys
+
+	for i in "$@"; do
+		case "$i" in
+			--*) echo "$i";;
+
+			-*)
+				keys=( `echo "${i##*-}" | fold -w1` )
+
+				[[ "${#keys[@]}" -gt 1 ]] && {
+					for k in ${keys[@]}; do
+						echo "-${k}"
+					done
+				} || {
+					echo "$i"
+				}
+			;;
+
+			*) echo "$i";;
+		esac
+	done
+}
+
+bh.parse_args() {
+	while [[ "$1" ]]; do
+		case "$1" in
+			-h|--help) bh.usage; exit;;
+			-v|-V|--version) bh.version; exit;;
+			--) :;;
+			-*)
+				bh.err "Unrecognized key: $1"
+				exit 1
+			;;
+			*) __ARGS+=( "$1" );;
+		esac
+		shift
+	done
+}
+
+# ----------------------------------------------------------------------------
 # Versions management
 #
 if [[ "$BASH_VERSION" < '4' ]]; then
@@ -17,18 +76,9 @@ declare -gr __NAILS_VERSION='1.0.0-pre1'
 # ----------------------------------------------------------------------------
 # Check the arguments
 #
-if [[ -z "$1" || '-h' == "$1" || '--help' == "$1" ]]; then
-	cat <<-END
-		Usage: bash-hammer filename [arguments]
-		       This program is not intended to be run directly.
-		       Please look inside to find out more.
-	END
-	exit
-fi
-if [[ '-V' == "$1" || '-v' == "$1" || '--version' == "$1" ]]; then
-	echo "bash-hammer version ${__NAILS_VERSION}"
-	exit
-fi
+bh.parse_args "$(bh.normalize_args "$@")"
+
+[[ "${__AGRS[0]}" ]] || { bh.usage; exit 1; }
 
 # ----------------------------------------------------------------------------
 # Define the magic
