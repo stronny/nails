@@ -12,7 +12,7 @@ if [[ "$BASH_VERSION" < '4' ]]; then
 	echo 'bash-hammer requires bash version 4 or higher'
 	exit 1
 fi
-declare -gr __HAMMER_VERSION='1.0.0-pre1'
+declare -gr __NAILS_VERSION='1.0.0-pre1'
 
 # ----------------------------------------------------------------------------
 # Check the arguments
@@ -26,7 +26,7 @@ if [[ -z "$1" || '-h' == "$1" || '--help' == "$1" ]]; then
 	exit
 fi
 if [[ '-v' == "$1" || '--version' == "$1" ]]; then
-	echo "bash-hammer version ${__HAMMER_VERSION}"
+	echo "bash-hammer version ${__NAILS_VERSION}"
 	exit
 fi
 
@@ -46,14 +46,14 @@ function require {
 	IFS=':' read -a dirs <<< "${__NAILS_PATH}"
 	for dir in "${dirs[@]}"; do
 		filename="$dir/$nail/lib/$nailfile.bash"
-		[[ "${__NAILFILES[$filename]}" ]] && return 0
+		[[ "${__NAILS_FILES[$filename]}" ]] && return 0
 		[[ -f "$filename" ]] && break
 		filename=''
 	done
 
 	read line path path < <(caller 0)
 	if [[ "$filename" ]]; then
-		__NAILFILES["$filename"]="$path:$line"
+		__NAILS_FILES["$filename"]="$path:$line"
 		source "$filename" "$@"
 	else
 		echo "$path:$line: $FUNCNAME: $nailfile: no such file" >&2
@@ -65,5 +65,5 @@ function require {
 # Let's get dangerous!
 #
 declare -g  __NAILS_PATH=~/.nails:/usr/local/lib/nails
-declare -gA __NAILFILES
+declare -gA __NAILS_FILES
 source "$@"
