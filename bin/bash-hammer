@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+#
+# This is a wrapper for bash scripts to enable the usage of nails.
+# To use it change the script's shebang to "#!/usr/bin/env bash-hammer".
+#
+# https://github.com/stronny/nails
+
+# ----------------------------------------------------------------------------
+# Versions management
+#
+if [[ "$BASH_VERSION" < '4' ]]; then
+	echo 'bash-hammer requires bash version 4 or higher'
+	exit 1
+fi
+declare -gr __HAMMER_VERSION='1.0.0-pre1'
+
+# ----------------------------------------------------------------------------
+# Check the arguments
+#
+if [[ -z "$1" || '-h' == "$1" || '--help' == "$1" ]]; then
+	cat <<-END
+		Usage: bash-hammer filename [arguments]
+		       This program is not intended to be run directly.
+		       Please look inside to find out more.
+	END
+	exit
+fi
+if [[ '-v' == "$1" || '--version' == "$1" ]]; then
+	echo "bash-hammer version ${__HAMMER_VERSION}"
+	exit
+fi
+
+# ----------------------------------------------------------------------------
+# Define the magic
+#
+function require {
+	local nailfile="$1"
+	local nail="${nailfile%%/*}"
+	local dirs=( )
+	local dir
+	local filename
+	local path
+	local line
+	shift
+
+	IFS=':' read -a dirs <<< "${__NAILS_PATH}"
+	for dir in "${dirs[@]}"; do
+		filename="$dir/$nail/lib/$nailfile.bash"
+		[[ "${__NAILFILES[$filename]}" ]] && return 0
+		[[ -f "$filename" ]] && break
+		filename=''
+	done
+
+	read line path path < <(caller 0)
+	if [[ "$filename" ]]; then
+		__NAILFILES["$filename"]="$path:$line"
+		source "$filename" "$@"
+	else
+		echo "$path:$line: $FUNCNAME: $nailfile: no such file" >&2
+		exit 127
+	fi
+}
+
+# ----------------------------------------------------------------------------
+# Let's get dangerous!
+#
+declare -g  __NAILS_PATH=~/.nails:/usr/local/lib/nails
+declare -gA __NAILFILES
+source "$@"
