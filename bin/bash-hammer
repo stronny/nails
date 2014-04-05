@@ -6,20 +6,6 @@
 # https://github.com/stronny/nails
 
 # ----------------------------------------------------------------------------
-# Internal functions
-#
-bh.usage() {
-	cat <<-END
-		Usage: bash-hammer filename [arguments]
-		       This program is not intended to be run directly.
-		       Please look inside to find out more.
-	END
-}
-
-bh.version() { echo "bash-hammer version ${__NAILS_VERSION}"; }
-bh.err() { echo "$1" >&2; }
-
-# ----------------------------------------------------------------------------
 # Versions management
 #
 if [[ "$BASH_VERSION" < '4' ]]; then
@@ -31,20 +17,23 @@ declare -gr __NAILS_VERSION='1.0.0-pre1'
 # ----------------------------------------------------------------------------
 # Check the arguments
 #
-while [[ "$1" ]]; do
-	case "$1" in
-		-h|--help) bh.usage; exit;;
-		-v|-V|--version) bh.version; exit;;
-		-*)
-			bh.err "Unrecognized key: $1"
-			exit 1
-		;;
-		--|*) break;;
-	esac
-	shift
-done
-
-[[ "$1" ]] || { bh.usage; exit 1; }
+case "$1" in
+	''|-h|--help)
+		echo 'Usage: bash-hammer filename [arguments]'
+		echo '       This program is not intended to be run directly.'
+		echo '       Please look inside to find out more.'
+		exit
+	;;
+	-v|-V|--version)
+		echo "bash-hammer version ${__NAILS_VERSION}"
+		exit
+	;;
+	--) : ;; # it means "if arg #1 is two dashes, then do nothing"
+	-*)
+		echo "bash-hammer: $1: invalid option" >&2
+		exit 1
+	;;
+esac
 
 # ----------------------------------------------------------------------------
 # Define the magic
@@ -61,16 +50,16 @@ function require {
 
 	IFS=':' read -a dirs <<< "${__NAILS_PATH}"
 	for dir in "${dirs[@]}"; do
-		unset filename
-
 		filename="$dir/$nail/lib/$nailfile.bash"
 		[[ "${__NAILS_FILES[$filename]}" ]] && return 0
 		[[ -f "$filename" ]] && break
+		filename=''
 	done
 
 	read line path path < <(caller 0)
 	if [[ "$filename" ]]; then
 		__NAILS_FILES["$filename"]="$path:$line"
+# FIXME unset all the local vars so that they won't pollute deeper scopes
 		source "$filename" "$@"
 	else
 		echo "$path:$line: $FUNCNAME: $nailfile: no such file" >&2
