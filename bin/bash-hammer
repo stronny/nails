@@ -6,34 +6,12 @@
 # https://github.com/stronny/nails
 
 # ----------------------------------------------------------------------------
-# Versions management
+# Check the requirements
 #
 if [[ "$BASH_VERSION" < '4' ]]; then
 	echo 'bash-hammer requires bash version 4 or higher'
 	exit 1
 fi
-declare -gr __NAILS_VERSION='1.0.0-pre1'
-
-# ----------------------------------------------------------------------------
-# Check the arguments
-#
-case "$1" in
-	''|-h|--help)
-		echo 'Usage: bash-hammer filename [arguments]'
-		echo '       This program is not intended to be run directly.'
-		echo '       Please look inside to find out more.'
-		exit
-	;;
-	-v|-V|--version)
-		echo "bash-hammer version ${__NAILS_VERSION}"
-		exit
-	;;
-	--) : ;; # it means "if arg #1 is two dashes, then do nothing"
-	-*)
-		echo "bash-hammer: $1: invalid option" >&2
-		exit 1
-	;;
-esac
 
 # ----------------------------------------------------------------------------
 # Define the magic
@@ -68,8 +46,34 @@ function require {
 }
 
 # ----------------------------------------------------------------------------
-# Let's get dangerous!
+# Setup environment
 #
 declare -g  __NAILS_PATH=~/.nails:/usr/local/lib/nails
 declare -gA __NAILS_FILES
+
+# ----------------------------------------------------------------------------
+# Check the arguments
+#
+case "$1" in
+	''|-h|--help)
+		echo 'Usage: bash-hammer filename [arguments]'
+		echo '       This program is not intended to be run directly.'
+		echo '       Please look inside to find out more.'
+		exit
+	;;
+	-v|-V|--version)
+		require nails/version
+		echo "bash-hammer version ${__NAILS_VERSION}"
+		exit
+	;;
+	--) : ;; # it means "if arg #1 is two dashes, then do nothing"
+	-*)
+		echo "bash-hammer: $1: invalid option" >&2
+		exit 1
+	;;
+esac
+
+# ----------------------------------------------------------------------------
+# Let's get dangerous!
+#
 source "$@"
