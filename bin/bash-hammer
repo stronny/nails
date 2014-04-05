@@ -59,7 +59,7 @@ function require {
 	read line path path < <(caller 0)
 	if [[ "$filename" ]]; then
 		__NAILS_FILES["$filename"]="$path:$line"
-# FIXME unset all the local vars so that they won't pollute deeper scopes
+		unset nailfile nail dirs dir path line # FIXME find a way to unset filename as well
 		source "$filename" "$@"
 	else
 		echo "$path:$line: $FUNCNAME: $nailfile: no such file" >&2
