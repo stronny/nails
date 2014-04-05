@@ -16,53 +16,8 @@ bh.usage() {
 	END
 }
 
-bh.version() {
-	echo "bash-hammer version ${__NAILS_VERSION}"
-}
-
-bh.err() {
-	echo "$1" >&2;
-}
-
-bh.normalize_args() {
-	local keys
-
-	for i in "$@"; do
-		case "$i" in
-			--*) echo "$i";;
-
-			-*)
-				keys=( `echo "${i##*-}" | fold -w1` )
-
-				[[ "${#keys[@]}" -gt 1 ]] && {
-					for k in ${keys[@]}; do
-						echo "-${k}"
-					done
-				} || {
-					echo "$i"
-				}
-			;;
-
-			*) echo "$i";;
-		esac
-	done
-}
-
-bh.parse_args() {
-	while [[ "$1" ]]; do
-		case "$1" in
-			-h|--help) bh.usage; exit;;
-			-v|-V|--version) bh.version; exit;;
-			--) :;;
-			-*)
-				bh.err "Unrecognized key: $1"
-				exit 1
-			;;
-			*) __ARGS+=( "$1" );;
-		esac
-		shift
-	done
-}
+bh.version() { echo "bash-hammer version ${__NAILS_VERSION}"; }
+bh.err() { echo "$1" >&2; }
 
 # ----------------------------------------------------------------------------
 # Versions management
@@ -76,9 +31,20 @@ declare -gr __NAILS_VERSION='1.0.0-pre1'
 # ----------------------------------------------------------------------------
 # Check the arguments
 #
-bh.parse_args "$(bh.normalize_args "$@")"
+while [[ "$1" ]]; do
+	case "$1" in
+		-h|--help) bh.usage; exit;;
+		-v|-V|--version) bh.version; exit;;
+		-*)
+			bh.err "Unrecognized key: $1"
+			exit 1
+		;;
+		--|*) break;;
+	esac
+	shift
+done
 
-[[ "${__ARGS[0]}" ]] || { bh.usage; exit 1; }
+[[ "$1" ]] || { bh.usage; exit 1; }
 
 # ----------------------------------------------------------------------------
 # Define the magic
@@ -95,10 +61,11 @@ function require {
 
 	IFS=':' read -a dirs <<< "${__NAILS_PATH}"
 	for dir in "${dirs[@]}"; do
+		unset filename
+
 		filename="$dir/$nail/lib/$nailfile.bash"
 		[[ "${__NAILS_FILES[$filename]}" ]] && return 0
 		[[ -f "$filename" ]] && break
-		filename=''
 	done
 
 	read line path path < <(caller 0)
