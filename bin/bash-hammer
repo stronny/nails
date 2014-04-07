@@ -68,8 +68,7 @@ function require {
 	#
 	nailfile=''
 	for part in "${parts[@]}"; do
-		[[ "$part" ]] || continue
-		nailfile+="/$part"
+		[[ "$part" ]] && nailfile+="/$part"
 	done
 
 	# look for the script file
