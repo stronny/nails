@@ -22,41 +22,116 @@ function Nails::BashHammer.unset_helper { unset -v "$@"; }
 # ----------------------------------------------------------------------------
 # Define the magic
 #
+# usage: require /nail             ([1] source nail/lib/nail.bash)
+#        require /nail/path/file   ([2] source nail/lib/nail/path/file.bash)
+#        require path/file         (like [2] inside the nail)
+#        require                   (like [1] inside the nail)
+#
 function require {
-	local nailfile="$1"
-	local nail="${nailfile%%/*}"
-	local dirs=( )
-	local dir
-	local filename
-	local path
-	local line
+	local target="$1"
+	local nailname nailfile filename
+	local caller caller_path caller_line
+	local i part dir
+	local -a parts dirs
 	shift
 
+	read caller_line caller_path caller_path < <(caller 0)
+	caller="$caller_path:$caller_line"
+
+	IFS='/' read -a parts <<< "$target"
+	# determine nailname
+	#
+	if [[ "${parts[0]}" || ${#parts[@]} -lt 1 ]]; then
+		if [[ -z "${__NAILS_CURRENT}" ]]; then
+			echo "$caller: $FUNCNAME: $target: relative target is only valid inside of a nail" >&2
+			return 127
+		fi
+		nailname="${__NAILS_CURRENT}"
+	else
+		for i in "${!parts[@]}"; do
+			part="${parts[$i]}"
+			if [[ "$part" ]]; then
+				nailname="$part"
+				unset parts[$i]
+				break
+			else
+				unset parts[$i]
+			fi
+		done
+	fi
+	if [[ -z "$nailname" ]]; then
+		echo "$caller: $FUNCNAME: $target: could not determine nail name" >&2
+		return 127
+	fi
+
+	# determine nailfile (empty is valid)
+	#
+	nailfile=''
+	for part in "${parts[@]}"; do
+		[[ "$part" ]] || continue
+		nailfile+="/$part"
+	done
+
+	# look for the script file
+	#
 	IFS=':' read -a dirs <<< "${__NAILS_PATH}"
 	for dir in "${dirs[@]}"; do
-		filename="$dir/$nail/lib/$nailfile.bash"
+		filename="$dir/$nailname/lib/${nailname}${nailfile}.bash"
 		[[ "${__NAILS_FILES[$filename]}" ]] && return 0
 		[[ -f "$filename" ]] && break
 		filename=''
 	done
 
-	read line path path < <(caller 0)
 	if [[ "$filename" ]]; then
-		__NAILS_FILES["$filename"]="$path:$line"
+		__NAILS_FILES["$filename"]="$caller"
 		set -- "$filename" "$@"
 		Nails::BashHammer.unset_helper nailfile nail dirs dir filename path line
+		local __NAILS_CURRENT="$nailname"
 		source "$@"
 	else
-		echo "$path:$line: $FUNCNAME: $nailfile: no such file" >&2
+		echo "$caller: $FUNCNAME: $target: no such file" >&2
 		return 127
 	fi
 }
 
 # ----------------------------------------------------------------------------
+# Temporary functions for environment setup
+#
+function __Nails::Setup.path {
+	local -r DEFAULT_PATH=~/.nails:/usr/local/lib/nails
+
+	case "${__NAILS_PATH}" in
+		'') declare -gx __NAILS_PATH="$DEFAULT_PATH";;
+		*:) __NAILS_PATH+="$DEFAULT_PATH";;
+	esac
+}
+
+function __Nails::Setup.current {
+	local realname
+	local dir
+	local -a dirs
+
+	realname="$(readlink -q -e -- "$1")"
+	[[ "$realname" ]] || realname="$(readlink -q -e -- "$0")"
+
+	declare -g __NAILS_CURRENT=''
+	IFS=':' read -a dirs <<< "${__NAILS_PATH}"
+	for dir in "${dirs[@]}"; do
+		[[ "$realname" =~ ^$dir/([^/]+)/ ]]
+		if [[ "${BASH_REMATCH[1]}" ]]; then
+			__NAILS_CURRENT="${BASH_REMATCH[1]}"
+			break
+		fi
+	done
+}
+
+# ----------------------------------------------------------------------------
 # Setup environment
 #
-declare -g  __NAILS_PATH=~/.nails:/usr/local/lib/nails
 declare -gA __NAILS_FILES
+__Nails::Setup.path
+__Nails::Setup.current "$1"
+unset -f __Nails::Setup.path __Nails::Setup.current
 
 # ----------------------------------------------------------------------------
 # Check the arguments
@@ -69,7 +144,7 @@ case "$1" in
 		exit
 	;;
 	-v|-V|--version)
-		require nails/version
+		require version
 		echo "bash-hammer version ${__NAILS_VERSION}"
 		exit
 	;;
