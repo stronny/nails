@@ -14,6 +14,12 @@ if [[ "$BASH_VERSION" < '4' ]]; then
 fi
 
 # ----------------------------------------------------------------------------
+# Accomodate for the unset scoping
+# http://wiki.bash-hackers.org/commands/builtin/unset
+#
+function Nails::BashHammer.unset_helper { unset -v "$@"; }
+
+# ----------------------------------------------------------------------------
 # Define the magic
 #
 function require {
@@ -37,8 +43,9 @@ function require {
 	read line path path < <(caller 0)
 	if [[ "$filename" ]]; then
 		__NAILS_FILES["$filename"]="$path:$line"
-		unset nailfile nail dirs dir path line # FIXME find a way to unset filename as well
-		source "$filename" "$@"
+		set -- "$filename" "$@"
+		Nails::BashHammer.unset_helper nailfile nail dirs dir filename path line
+		source "$@"
 	else
 		echo "$path:$line: $FUNCNAME: $nailfile: no such file" >&2
 		exit 127
