@@ -48,7 +48,7 @@ function require {
 		source "$@"
 	else
 		echo "$path:$line: $FUNCNAME: $nailfile: no such file" >&2
-		exit 127
+		return 127
 	fi
 }
 
