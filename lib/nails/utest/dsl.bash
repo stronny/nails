@@ -67,7 +67,7 @@ function expect {
 
 	declare -F "$testfunc" >/dev/null || { echo "$FUNCNAME: undefined result: $result" >&2; return 2; }
 
-	Nails::UTest.close_current
+	Nails::UTest::DSL.close_current
 
 	echo -n "Checking whether ${__NAILS_UTEST_DESC[$result]}: "
 	__NAILS_UTEST[testfunc]="$testfunc"
@@ -77,7 +77,7 @@ function expect {
 	[[ $# -gt 0 ]] && - "$@" # if there are any args, then run the test on them
 }
 
-function Nails::UTest.close_current {
+function Nails::UTest::DSL.close_current {
 	[[ "${__NAILS_UTEST[testfunc]}" ]] || return
 	echo "${__NAILS_UTEST[current_pass]} pass, ${__NAILS_UTEST[current_fail]} fail"
 	echo -n "${__NAILS_UTEST[current_msgs]}"
@@ -87,8 +87,8 @@ function Nails::UTest.close_current {
 # Test runner
 #
 function - {
-	local saved_fail="${__NAILS_UTEST[current_fail]}"
 	[[ "${__NAILS_UTEST[testfunc]}" ]] || { echo "$FUNCNAME: no result currently expected"; return 2; }
+	local saved_fail="${__NAILS_UTEST[current_fail]}"
 	Nails::UTest.inspect "$@"
 	__NAILS_UTEST[assert_msgs]=''
 	"${__NAILS_UTEST[testfunc]}"
@@ -102,9 +102,9 @@ function - {
 # ----------------------------------------------------------------------------
 # Cleanup and totals
 #
-function Nails::UTest.total {
-	Nails::UTest.close_current
+function Nails::UTest::DSL.total {
+	Nails::UTest::DSL.close_current
 	echo "TOTAL: ${__NAILS_UTEST[total_pass]:-0} pass, ${__NAILS_UTEST[total_fail]:-0} fail"
 }
 
-trap Nails::UTest.total EXIT
+trap Nails::UTest::DSL.total EXIT
