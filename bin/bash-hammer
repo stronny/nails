@@ -113,11 +113,11 @@ function __Nails::Setup.current {
 	realname="$(readlink -q -e -- "$1")"
 	[[ "$realname" ]] || realname="$(readlink -q -e -- "$0")"
 
+	# FIXME won't work if the nail directory is itself a symlink
 	declare -g __NAILS_CURRENT=''
 	IFS=':' read -a dirs <<< "${__NAILS_PATH}"
 	for dir in "${dirs[@]}"; do
-		[[ "$realname" =~ ^$dir/([^/]+)/ ]]
-		if [[ "${BASH_REMATCH[1]}" ]]; then
+		if [[ "$realname" =~ ^$dir/([^/]+)/ ]]; then
 			__NAILS_CURRENT="${BASH_REMATCH[1]}"
 			break
 		fi
