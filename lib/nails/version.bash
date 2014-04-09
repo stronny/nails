@@ -1,3 +1,3 @@
 #!/syntax/bash
 
-declare -gr __NAILS_VERSION='1.0.0-dev'
+declare -gr __NAILS_VERSION="$(< ${__NAILS_CURRENT[path]}/version)"

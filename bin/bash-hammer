@@ -42,11 +42,11 @@ function require {
 	# determine nailname
 	#
 	if [[ "${parts[0]}" || ${#parts[@]} -lt 1 ]]; then
-		if [[ -z "${__NAILS_CURRENT}" ]]; then
+		if [[ -z "${__NAILS_CURRENT[name]}" ]]; then
 			echo "$caller: $FUNCNAME: $target: relative target is only valid inside of a nail" >&2
 			return 127
 		fi
-		nailname="${__NAILS_CURRENT}"
+		nailname="${__NAILS_CURRENT[name]}"
 	else
 		for i in "${!parts[@]}"; do
 			part="${parts[$i]}"
@@ -83,9 +83,11 @@ function require {
 
 	if [[ "$filename" ]]; then
 		__NAILS_FILES["$filename"]="$caller"
+		local -A __NAILS_CURRENT
+		__NAILS_CURRENT[name]="$nailname"
+		__NAILS_CURRENT[path]="$dir/$nailname"
 		set -- "$filename" "$@"
-		Nails::BashHammer.unset_helper nailfile nail dirs dir filename path line
-		local __NAILS_CURRENT="$nailname"
+		Nails::BashHammer.unset_helper target nailname nailfile filename caller caller_path caller_line i part dir parts dirs
 		source "$@"
 	else
 		echo "$caller: $FUNCNAME: $target: no such file" >&2
@@ -114,11 +116,12 @@ function __Nails::Setup.current {
 	[[ "$realname" ]] || realname="$(readlink -q -e -- "$0")"
 
 	# FIXME won't work if the nail directory is itself a symlink
-	declare -g __NAILS_CURRENT=''
+	declare -gA __NAILS_CURRENT
 	IFS=':' read -a dirs <<< "${__NAILS_PATH}"
 	for dir in "${dirs[@]}"; do
 		if [[ "$realname" =~ ^$dir/([^/]+)/ ]]; then
-			__NAILS_CURRENT="${BASH_REMATCH[1]}"
+			__NAILS_CURRENT[name]="${BASH_REMATCH[1]}"
+			__NAILS_CURRENT[path]="$dir/${__NAILS_CURRENT[name]}"
 			break
 		fi
 	done

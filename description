@@ -1,0 +1,10 @@
+This nail implements the nails infrastructure.
+
+It currently consists of the following parts:
+
+Programs:
+	bash-hammer: provides the require() function for your scripts
+	nail: a command-line tool for nails management
+
+Libraries:
+	utest: a unit testing framework of sorts
