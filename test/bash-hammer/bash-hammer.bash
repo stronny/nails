@@ -27,17 +27,17 @@ end
 # Run tests
 #
 require version
-readonly subject=bash-hammer
+function subject { bash-hammer "$@"; }
 
 expect :usage from:
-- $subject
-- $subject ''
-- $subject -h
-- $subject --help
+- subject
+- subject ''
+- subject -h
+- subject --help
 
 expect :version from:
-- $subject -v
-- $subject -V
-- $subject --version
+- subject -v
+- subject -V
+- subject --version
 
-expect :invalid from $subject -?
+expect :invalid from subject -?

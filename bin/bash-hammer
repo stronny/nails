@@ -99,7 +99,7 @@ function require {
 # Temporary functions for environment setup
 #
 function __Nails::Setup.path {
-	local -r DEFAULT_PATH=~/.nails:/usr/local/lib/nails
+	local -r DEFAULT_PATH=~/.nails:/usr/lib/nails:/usr/local/lib/nails
 
 	case "${__NAILS_PATH}" in
 		'') declare -gx __NAILS_PATH="$DEFAULT_PATH";;
@@ -160,4 +160,5 @@ esac
 # ----------------------------------------------------------------------------
 # Let's get dangerous!
 #
-source "$@"
+shift
+source "${BASH_ARGV[$#]}" "$@"
