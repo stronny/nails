@@ -56,6 +56,7 @@ function require {
 	caller="$caller_path:$caller_line"
 
 	IFS='/' read -a parts <<< "$target"
+
 	# determine nailname (empty is valid)
 	#
 	if [[ "${parts[0]}" || ${#parts[@]} -lt 1 ]]; then
@@ -100,8 +101,7 @@ function require {
 		IFS=':' read -a dirs <<< "${__NAILS_PATH}"
 		for dir in "${dirs[@]}"; do
 			[[ "$dir" ]] || continue
-#			version="$(cat "$dir/$nailname/spec/version" 2>/dev/null)" || true
-			version="$(cat "$dir/$nailname/spec/version")" || true
+			version="$(cat "$dir/$nailname/spec/version" 2>/dev/null)" || true
 			if [[ "$version" ]]; then
 				naildir="$dir/$nailname"
 				break
