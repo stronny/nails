@@ -1,0 +1,8 @@
+LICENSE
+README.md
+bin/bash-hammer
+test/bash-hammer.bash
+lib/nails.bash
+lib/nails/utest.bash
+lib/nails/utest/assert.bash
+lib/nails/utest/dsl.bash

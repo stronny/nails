@@ -1,4 +1,4 @@
-#!/usr/bin/env bash-hammer
+#!/syntax/bash
 
 require utest
 
@@ -13,10 +13,6 @@ result: the program writes its :usage <<-'end'
 	EOF
 end
 
-result: the program writes its :version <<-'end'
-	stdout: "^bash-hammer version ${__NAILS_VERSION}$"
-end
-
 result: the program detects an :invalid option <<-'end'
 	status: 1
 	stderr: "^bash-hammer: .+: invalid option$"
@@ -26,18 +22,12 @@ end
 # ----------------------------------------------------------------------------
 # Run tests
 #
-require version
-function subject { bash-hammer "$@"; }
+function subject { "${__NAILS_CURRENT[:path]}/bin/bash-hammer" "$@"; }
 
 expect :usage from:
 - subject
 - subject ''
 - subject -h
 - subject --help
-
-expect :version from:
-- subject -v
-- subject -V
-- subject --version
 
 expect :invalid from subject -?
