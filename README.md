@@ -22,8 +22,11 @@ Nail is a directory inside `${__NAILS_PATH}` with a layout like this:
 			example/
 				subexample_a.bash
 				subexample_b.bash
+		spec/
+			version
 		test/
-			example.test
+			example.bash
+		LICENSE
 		README
 ```
 
